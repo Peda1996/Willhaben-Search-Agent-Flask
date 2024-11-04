@@ -71,36 +71,45 @@
         </tbody>
     </table>
 </div>
-{% block scripts %}
 
+
+{% block scripts %}
 <script>
 function confirmDelete() {
     return confirm("Are you sure you want to delete this URL?");
 }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // Toggle configuration form visibility
-            const toggleButton = document.getElementById('toggle-config');
-            const configForm = document.getElementById('config-form');
+document.addEventListener('DOMContentLoaded', function () {
+    // Toggle configuration form visibility
+    const toggleButton = document.getElementById('toggle-config');
+    const configForm = document.getElementById('config-form');
 
-            toggleButton.addEventListener('click', function () {
-                configForm.classList.toggle('hidden');
-                toggleButton.textContent = configForm.classList.contains('hidden') ? 'Show Configuration' : 'Hide Configuration';
+    toggleButton.addEventListener('click', function () {
+        configForm.classList.toggle('hidden');
+        toggleButton.textContent = configForm.classList.contains('hidden') ? 'Show Configuration' : 'Hide Configuration';
+    });
+
+    // Auto-update URLs table and maintain scroll position
+    setInterval(updateUrlsTable, 5000);
+
+    function updateUrlsTable() {
+        // Save the current scroll position
+        const scrollTop = document.querySelector('#urls-table').scrollTop;
+        const scrollLeft = document.querySelector('#urls-table').scrollLeft;
+
+        fetch('{{ url_for("index") }}')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.querySelector('#urls-table').innerHTML;
+                document.querySelector('#urls-table').innerHTML = newTable;
+
+                // Restore the scroll position
+                document.querySelector('#urls-table').scrollTop = scrollTop;
+                document.querySelector('#urls-table').scrollLeft = scrollLeft;
             });
-
-            // Auto-update URLs table
-            setInterval(updateUrlsTable, 5000);
-
-            function updateUrlsTable() {
-                fetch('{{ url_for("index") }}')
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const newTable = doc.querySelector('#urls-table').innerHTML;
-                        document.querySelector('#urls-table').innerHTML = newTable;
-                    });
-            }
-        });
-    </script>
+    }
+});
+</script>
 {% endblock %}

@@ -6,3 +6,4 @@ python-telegram-bot==21.6
 waitress==3.0.1
 selenium==4.26.1
 undetected-chromedriver==3.5.5
+setuptools==75.3.0

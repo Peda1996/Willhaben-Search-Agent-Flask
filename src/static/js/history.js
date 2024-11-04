@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     tr.classList.add('border-b');
                     tr.innerHTML = `
                      <td class="py-3 px-6">
-                            <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-500 break-all hover:underline">
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 break-all hover:underline">
                                 ${item.url}
                             </a>
                         </td>
                         <td class="py-3 px-6">
-                                <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-500 break-all hover:underline">
+                                <a href=" ${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 break-all hover:underline">
                          ${item.source_url}
                              </a>
                          </td>

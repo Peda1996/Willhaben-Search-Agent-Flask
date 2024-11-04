@@ -119,8 +119,13 @@ def get_crawled_urls(page, per_page):
                                  ORDER BY cu.crawled_at DESC
                                  LIMIT ? OFFSET ?''', (per_page, offset))
         urls = cursor.fetchall()
-        count_cursor = conn.execute('SELECT COUNT(*) FROM crawled_urls')
+
+        # Use JOIN in the count query as well
+        count_cursor = conn.execute('''SELECT COUNT(*)
+                                       FROM crawled_urls cu
+                                       JOIN urls_to_crawl u ON cu.source_url_id = u.id''')
         total = count_cursor.fetchone()[0]
+
     conn.close()
     return urls, total
 

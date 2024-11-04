@@ -13,19 +13,19 @@ git pull
 check_status "Git pull"
 
 echo "Pulling latest Docker images..."
-docker-compose pull
+docker compose pull
 check_status "Docker image pull"
 
 echo "Building Docker images without cache..."
-docker-compose build --no-cache
+docker compose build --no-cache
 check_status "Docker image build"
 
 echo "Stopping and removing existing containers..."
-docker-compose down
+docker compose down
 check_status "Stopping containers"
 
 echo "Starting services..."
-docker-compose up -d
+docker compose up -d
 check_status "Starting containers"
 
 echo "All Docker services updated and started successfully."

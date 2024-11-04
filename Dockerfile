@@ -10,7 +10,7 @@ COPY . /app
 # Create the data directory within the container
 RUN mkdir -p /app/src/data
 
-# Install dependencies for Chrome and ChromeDriver
+# Install dependencies for Chrome and ChromeDriver, including libvulkan1
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     wget \
@@ -30,8 +30,9 @@ RUN apt-get update && \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
-    xdg-utils && \
-    rm -rf /var/lib/apt/lists/*
+    xdg-utils \
+    libvulkan1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
 RUN wget -q -O google-chrome-stable_current_amd64.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \

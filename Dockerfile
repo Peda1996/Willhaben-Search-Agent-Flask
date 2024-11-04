@@ -7,6 +7,9 @@ WORKDIR /app/src
 # Copy the current directory contents into the container at /app/src
 COPY . /app/src
 
+# Create the data directory within the container
+RUN mkdir -p /app/src/data
+
 # Install any necessary packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 

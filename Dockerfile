@@ -17,11 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Set environment variables with the new working directory in src
-ENV FLASK_APP=app.py
+ENV FLASK_APP=/app/src/app.py
 ENV FLASK_ENV=production
 
 # Ensure /app/src/data is created as a persistent volume for config and database storage
 VOLUME ["/app/src/data"]
 
 # Run the command to start the Flask app
-CMD ["python", "app.py"]
+CMD ["python", "/app/src/app.py"]

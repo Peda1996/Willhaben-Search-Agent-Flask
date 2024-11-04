@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: willhaben_crawler_app
+    ports:
+      - "5000:5000"  # Expose the Flask app to localhost:5000
+    volumes:
+      - ./src/data:/app/src/data  # Persist data and config storage
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: production
+    restart: always  # Automatically restart on failure

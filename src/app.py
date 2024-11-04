@@ -1,3 +1,5 @@
+import multiprocessing
+import os
 import threading
 
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
@@ -131,6 +133,11 @@ if __name__ == '__main__':
     init_db()
     schedule_crawler()
     threading.Thread(target=lambda: asyncio.run(run_bot())).start()
-    app.run(debug=False) # debug True does not work with telegram bots somehow..
 
-
+    if os.getenv('FLASK_ENV') == 'development':
+        # For development, use Flask’s built-in server
+        app.run(debug=False)
+    else:
+        # For production, serve with Waitress
+        from waitress import serve
+        serve(app, host="0.0.0.0", port=5000)

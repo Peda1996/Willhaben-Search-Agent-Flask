@@ -1,8 +1,9 @@
+import platform
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
-import undetected_chromedriver as uc
 
 from config import config
 from db_utils import (
@@ -19,15 +20,35 @@ prefix = "https://www.kleinanzeigen.de"
 # Initialize index to keep track of which URL to crawl next
 current_index = 0
 
-# Initialize undetected Chrome without specifying binary location
-options = uc.ChromeOptions()
-options.headless = True
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
 
-# Use undetected Chrome without specifying binary location
-driver = uc.Chrome(options=options)
+if platform.system() == "Windows":
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    # Set up Chrome options for headless browsing
+    chrome_options = Options()
+    chrome_options.headless = True
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+
+    # Initialize the Chrome WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+else:
+    import undetected_chromedriver as uc
+
+    # Initialize undetected Chrome without specifying binary location
+    options = uc.ChromeOptions()
+    options.headless = True
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+
+
+    # Use undetected Chrome without specifying binary location
+    driver = uc.Chrome(options=options)
 
 
 # Crawl a single URL from the list in a round-robin fashion

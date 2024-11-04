@@ -26,6 +26,7 @@ app.secret_key = SECRET_KEY
 def set_config():
     config['check_frequency'] = int(request.form['check_frequency'])
     config['telegram_token'] = request.form['telegram_token']
+    config['start_password'] = request.form['start_password']
     flash("Configuration updated!")
 
     # Save the updated config to the JSON file

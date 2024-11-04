@@ -56,7 +56,7 @@ This command will start the Flask app, accessible at `http://localhost:5000`.
     Follow instructions in the `/help` command within Telegram to set up URLs and receive notifications.
 
 ### Available Telegram Commands
-- `/start` - Initialize the bot for your chat.
+- `/start <password>` - Initialize the bot for your chat.
 - `/help` - Display help message with commands and usage.
 - `/addurl <name> <url>` - Add a URL to be crawled with a specified name.
 - `/listurls` - List all URLs being crawled.

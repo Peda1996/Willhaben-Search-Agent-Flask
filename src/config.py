@@ -13,8 +13,10 @@ CONFIG_FILE_PATH = 'data/config.json'
 # Default configuration
 config = {
     'check_frequency': 60,  # in seconds
-    'telegram_token': ''
+    'telegram_token': '',
+    'start_password': 'default_password'  # Replace this with the actual password
 }
+
 
 # Load configuration from JSON file if available
 def load_config():
@@ -26,10 +28,12 @@ def load_config():
         # If the config file does not exist, create it with default values
         save_config()
 
+
 # Save configuration to JSON file
 def save_config():
     with open(CONFIG_FILE_PATH, 'w') as f:
         json.dump(config, f, indent=4)
+
 
 # Initialize logging
 logging.basicConfig(

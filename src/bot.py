@@ -19,16 +19,24 @@ logging.basicConfig(level=logging.INFO)
 # Global variable to store the bot application
 bot_application = None
 
-# Telegram command handlers
+
+# Telegram command handlers with password check for /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
+    # Check if password is provided and correct
+    if len(context.args) < 1 or context.args[0] != config['start_password']:
+        await update.message.reply_text("Invalid password. Please use: /start <password>")
+        return
+
+    # Save chat ID if the password is correct
     save_chat_id(chat.id, chat.type)
     await update.message.reply_text("Hello! I'm your crawling bot. Use /help to see available commands.")
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
         "Here are the available commands:\n"
-        "/start - Start the bot and save your chat ID\n"
+        "/start <password> - Start the bot and save your chat ID\n"
         "/help - Show this help message\n"
         "/addurl <name> <url> - Add a new URL to crawl with a given name\n"
         "/listurls - List all URLs being crawled\n"
@@ -36,6 +44,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/stop - Stop receiving messages from this bot and remove your chat ID"
     )
     await update.message.reply_text(help_text)
+
 
 async def addurl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -53,6 +62,7 @@ async def addurl(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Please provide a name and a URL after the /addurl command. Example: /addurl MySite https://example.com"
         )
 
+
 async def listurls(update: Update, context: ContextTypes.DEFAULT_TYPE):
     urls = get_urls_to_crawl()
     if urls:
@@ -62,6 +72,7 @@ async def listurls(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(message)
     else:
         await update.message.reply_text("No URLs are currently being crawled.")
+
 
 async def removeurl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -74,6 +85,7 @@ async def removeurl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Please provide the ID of the URL to remove after the /removeurl command.")
 
+
 async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     if remove_chat_id(chat.id):
@@ -81,8 +93,10 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("You weren't registered, but the bot has been stopped for you.")
 
+
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sorry, I didn't understand that command. Use /help to see available commands.")
+
 
 # Send Telegram message to all chats
 def send_telegram_message(message):
@@ -94,6 +108,7 @@ def send_telegram_message(message):
             threading.Thread(target=lambda: asyncio.run(bot.send_message(chat_id=chat_id, text=message))).start()
         except Exception as e:
             logging.error(f"Error sending message to Telegram chat {chat_id}: {e}")
+
 
 # Run the Telegram bot as a background task
 async def run_bot():
@@ -120,6 +135,7 @@ async def run_bot():
     logging.info("Telegram bot started.")
     await asyncio.Event().wait()
 
+
 # Stop the Telegram bot if it's running
 async def stop_bot():
     global bot_application
@@ -131,6 +147,7 @@ async def stop_bot():
             logging.info("Telegram bot stopped.")
         except Exception as e:
             logging.error(f"Failed to stop the bot: {e}")
+
 
 # Start the bot if run directly
 if __name__ == "__main__":

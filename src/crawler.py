@@ -13,38 +13,69 @@ from bot import send_telegram_message
 from config import config, willhaben_prefix
 import logging
 
+# Initialize index to keep track of which URL to crawl next
+current_index = 0
 
-# Crawl the configured URLs and check for new items
+# Crawl a single URL from the list in a round-robin fashion
 def crawl_and_notify():
+    global current_index
     urls_to_crawl = get_urls_to_crawl()
-    for url_id, url, name, created_date, last_checked, last_update in urls_to_crawl:
-        try:
-            response = requests.get(url)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            script = soup.find('script', type='application/ld+json')
 
-            new_links_found = False
-            send_notifications = last_checked is not None
+    # Check if there are URLs to crawl
+    if not urls_to_crawl:
+        logging.warning("No URLs to crawl.")
+        return
 
-            if script:
-                json_data = json.loads(script.string)
-                urls = [item["url"] for item in json_data.get('itemListElement', [])]
+    # Attempt to get the URL at the current index
+    try:
+        url_data = urls_to_crawl[current_index]
+    except IndexError:
+        # Reset the index if it is out of bounds and log a warning
+        logging.warning("Current index out of bounds, resetting to 0.")
+        current_index = 0
+        return
 
-                for found_url in urls:
-                    found_url = willhaben_prefix + found_url
-                    if not crawled_url_exists(found_url, url_id):
-                        save_crawled_url(found_url, url_id)
-                        if send_notifications:
-                            send_telegram_message(f"New Product found for product {name}:\n{found_url}")
-                        new_links_found = True
+    url_id, url, name, created_date, last_checked, last_update = url_data
 
-                current_time = datetime.now()
-                if new_links_found:
-                    update_url_to_crawl(url_id, last_checked=current_time, last_update=current_time)
-                else:
-                    update_url_to_crawl(url_id, last_checked=current_time)
-        except Exception as e:
-            logging.error(f"Error crawling {url}: {e}")
+    try:
+        response = requests.get(url, timeout=10)  # Set a timeout to avoid hanging
+        response.raise_for_status()  # Raise an error if the response is not 200
+    except requests.RequestException as e:
+        logging.error(f"Network error while crawling {url}: {e}")
+        return
+
+    try:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        script = soup.find('script', type='application/ld+json')
+
+        new_links_found = False
+        send_notifications = last_checked is not None
+
+        if script:
+            json_data = json.loads(script.string)
+            urls = [item["url"] for item in json_data.get('itemListElement', [])]
+
+            for found_url in urls:
+                full_url = willhaben_prefix + found_url
+                if not crawled_url_exists(full_url, url_id):
+                    save_crawled_url(full_url, url_id)
+                    if send_notifications:
+                        send_telegram_message(f"New Product found for product {name}:\n{full_url}")
+                    new_links_found = True
+
+            current_time = datetime.now()
+            if new_links_found:
+                update_url_to_crawl(url_id, last_checked=current_time, last_update=current_time)
+            else:
+                update_url_to_crawl(url_id, last_checked=current_time)
+
+    except (json.JSONDecodeError, AttributeError) as e:
+        logging.error(f"Error parsing data for URL {url}: {e}")
+    except Exception as e:
+        logging.error(f"Unexpected error while processing URL {url}: {e}")
+
+    # Move to the next URL in the list for the next interval
+    current_index = (current_index + 1) % len(urls_to_crawl)
 
 
 # Schedule the crawler

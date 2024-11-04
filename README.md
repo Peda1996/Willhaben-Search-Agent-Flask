@@ -55,6 +55,24 @@ This command will start the Flask app, accessible at `http://localhost:5000`.
 4. **Start the Telegram Bot**:
     Follow instructions in the `/help` command within Telegram to set up URLs and receive notifications.
 
+### Update Script for Willhaben Web Crawler Bot
+
+This guide provides instructions for using the `update.sh` script, which automates the process of updating the Willhaben Web Crawler Bot. The script pulls the latest code from the Git repository, rebuilds Docker containers, and restarts services to apply any changes seamlessly.
+
+#### Purpose of `update.sh`
+
+The `update.sh` script performs the following actions in sequence:
+1. Pulls the latest code from the Git repository.
+2. Updates Docker images if there are any new versions.
+3. Rebuilds Docker containers without using cache to apply any changes.
+4. Restarts the Docker containers to ensure the updated code is running.
+
+## Usage
+
+1. Ensure the script is executable:
+   ```bash
+   chmod +x update.sh
+   
 ### Available Telegram Commands
 - `/start <password>` - Initialize the bot for your chat.
 - `/help` - Display help message with commands and usage.

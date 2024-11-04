@@ -5,13 +5,13 @@ FROM python:3.12-slim
 WORKDIR /app/src
 
 # Copy the current directory contents into the container at /app/src
-COPY . /app/src
+COPY . /app
 
 # Create the data directory within the container
 RUN mkdir -p /app/src/data
 
 # Install any necessary packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Expose the port on which the Flask app will run
 EXPOSE 5000

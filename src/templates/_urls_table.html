@@ -1,0 +1,38 @@
+<table class="min-w-full bg-white shadow-md rounded mb-6">
+    <thead>
+        <tr>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Name</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">URL</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Created Date</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Last Checked</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Last Update</th>
+            <th class="py-3 px-6 bg-gray-200"></th>
+        </tr>
+    </thead>
+    <tbody class="text-gray-700">
+        {% for item in urls_to_crawl %}
+            <tr class="border-b">
+                <td class="py-3 px-6">{{ item.name }}</td>
+                <td class="py-3 px-6">
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">
+                        {{ item.url }}
+                    </a>
+                </td>
+                <td class="py-3 px-6">{{ item.created_date }}</td>
+                <td class="py-3 px-6">{{ item.last_checked }}</td>
+                <td class="py-3 px-6">{{ item.last_update }}</td>
+                <td class="py-3 px-6">
+                    <form action="{{ url_for('delete_url', url_id=item.id) }}" method="post">
+                        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6" class="py-3 px-6 text-center">No URLs to crawl. Add one above.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

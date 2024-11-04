@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Crawled URLs History</h1>
+<div id="history-table">
+    {% include '_history_table.html' %}
+</div>
+<div class="mt-6">
+    <a href="{{ url_for('index') }}" class="text-blue-500 hover:text-blue-700 font-semibold">Back to Configuration</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const page = {{ page }};
+</script>
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

@@ -1,16 +1,16 @@
 {% extends "_base.html" %}
 
 {% block content %}
-    <h1 class="text-3xl font-bold mb-6">Web Crawler Configuration</h1>
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Web Crawler Configuration</h1>
 
     <!-- Collapsible Configuration Section -->
     <div class="mb-4">
-        <button id="toggle-config" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-4">
+        <button id="toggle-config" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-4">
             Show Configuration
         </button>
 
         <!-- Configuration Form (hidden by default) -->
-        <div id="config-form" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 hidden">
+        <div id="config-form" class="bg-white shadow-md rounded px-4 sm:px-8 pt-6 pb-8 mb-4 hidden">
             <form action="{{ url_for('set_config') }}" method="post">
                 <div class="mb-4">
                     <label for="check_frequency" class="block text-gray-700 text-sm font-bold mb-2">Check Frequency (seconds):</label>
@@ -30,8 +30,8 @@
                         class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         Save Configuration
                     </button>
                 </div>
@@ -40,23 +40,23 @@
     </div>
 
     <!-- URLs to Crawl Section -->
-    <h2 class="text-2xl font-bold mb-4">URLs to Crawl</h2>
+    <h2 class="text-xl sm:text-2xl font-bold mb-4">URLs to Crawl</h2>
 
     <!-- Add URL Form -->
     <form action="{{ url_for('add_url') }}" method="post" class="mb-4">
-        <div class="flex">
+        <div class="flex flex-col sm:flex-row gap-2">
             <input type="text" name="name" placeholder="Enter Name" required
-                   class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2">
+                   class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <input type="text" name="url" placeholder="Enter URL to crawl" required
-                   class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2">
-            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                   class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <button type="submit" class="w-full sm:w-auto bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 Add URL
             </button>
         </div>
     </form>
 
     <!-- URLs Table -->
-    <div id="urls-table">
+    <div id="urls-table" class="overflow-x-auto">
         {% include '_urls_table.html' %}
     </div>
 
@@ -70,7 +70,7 @@
     <ul class="list-disc list-inside ml-4">
         <li><code>/start</code>: Start the bot and save your chat ID to receive updates.</li>
         <li><code>/help</code>: Show this help message with a list of available commands.</li>
-        <li><code>/addurl &lt;name&gt; &lt;url&gt;</code>: Add a new URL to crawl with a given name. Example: <code>/addurl Box https://www.willhaben.at/iad/kau..</code></li>
+        <li><code>/addurl &lt;name&gt; &lt;url&gt;</code>: Add a new URL to crawl with a given name.</li>
         <li><code>/listurls</code>: List all URLs currently being crawled, along with their names.</li>
         <li><code>/removeurl &lt;id&gt;</code>: Remove a URL from the crawl list by its ID.</li>
         <li><code>/stop</code>: Stop receiving messages from the bot and remove your chat ID from the list.</li>
@@ -88,33 +88,4 @@
             </div>
         {% endif %}
     {% endwith %}
-{% endblock %}
-
-{% block scripts %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Toggle configuration form visibility
-            const toggleButton = document.getElementById('toggle-config');
-            const configForm = document.getElementById('config-form');
-
-            toggleButton.addEventListener('click', function () {
-                configForm.classList.toggle('hidden');
-                toggleButton.textContent = configForm.classList.contains('hidden') ? 'Show Configuration' : 'Hide Configuration';
-            });
-
-            // Auto-update URLs table
-            setInterval(updateUrlsTable, 5000);
-
-            function updateUrlsTable() {
-                fetch('{{ url_for("index") }}')
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const newTable = doc.querySelector('#urls-table').innerHTML;
-                        document.querySelector('#urls-table').innerHTML = newTable;
-                    });
-            }
-        });
-    </script>
 {% endblock %}

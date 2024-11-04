@@ -50,6 +50,8 @@ else:
     # Use undetected Chrome without specifying binary location
     driver = uc.Chrome(options=options)
 
+driver.set_page_load_timeout(30)  # Timeout after 30 seconds
+
 
 # Crawl a single URL from the list in a round-robin fashion
 def crawl_and_notify():
@@ -116,8 +118,8 @@ scheduler.start()
 
 def schedule_crawler():
     scheduler.remove_all_jobs()
-    scheduler.add_job(crawl_and_notify, 'interval', seconds=config['check_frequency'], id='crawl_and_notify')
-
+    scheduler.add_job(crawl_and_notify, 'interval', seconds=config['check_frequency'], id='crawl_and_notify',
+                      max_instances=1)
 
 # Ensure to close the driver when done (e.g., at the end of the application or in a shutdown hook)
 import atexit

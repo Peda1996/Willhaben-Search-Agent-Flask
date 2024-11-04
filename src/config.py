@@ -5,8 +5,6 @@ import uuid
 # Flask Secret Key
 SECRET_KEY = str(uuid.uuid4())
 
-willhaben_prefix = "https://www.willhaben.at"
-
 # Config file path
 CONFIG_FILE_PATH = 'data/config.json'
 

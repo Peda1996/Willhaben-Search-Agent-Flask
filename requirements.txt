@@ -4,3 +4,5 @@ requests==2.32.3
 beautifulsoup4==4.12.3
 python-telegram-bot==21.6
 waitress==3.0.1
+selenium==4.26.1
+undetected-chromedriver==3.5.5

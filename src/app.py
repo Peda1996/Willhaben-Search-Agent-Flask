@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 import threading
 
@@ -11,7 +10,7 @@ from db_utils import (
     get_urls_to_crawl,
     get_crawled_urls
 )
-from crawler import schedule_crawler
+from crawlers import schedule_crawler
 from bot import run_bot, stop_bot, send_telegram_message
 import asyncio
 import math

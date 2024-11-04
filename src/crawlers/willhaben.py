@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from datetime import datetime
+
+from config import config
 from db_utils import (
     get_urls_to_crawl,
     crawled_url_exists,
@@ -10,20 +12,25 @@ from db_utils import (
     update_url_to_crawl
 )
 from bot import send_telegram_message
-from config import config, willhaben_prefix
 import logging
+
+willhaben_prefix = "https://www.willhaben.at"
 
 # Initialize index to keep track of which URL to crawl next
 current_index = 0
+
 
 # Crawl a single URL from the list in a round-robin fashion
 def crawl_and_notify():
     global current_index
     urls_to_crawl = get_urls_to_crawl()
 
+    # Filter URLs to include only those that start with willhaben_prefix
+    urls_to_crawl = [url_data for url_data in urls_to_crawl if url_data[1].startswith(willhaben_prefix)]
+
     # Check if there are URLs to crawl
     if not urls_to_crawl:
-        logging.warning("No URLs to crawl.")
+        logging.warning("No willhaben URLs to crawl.")
         return
 
     # Attempt to get the URL at the current index
@@ -60,7 +67,7 @@ def crawl_and_notify():
                 if not crawled_url_exists(full_url, url_id):
                     save_crawled_url(full_url, url_id)
                     if send_notifications:
-                        send_telegram_message(f"New Product found for product {name}:\n{full_url}")
+                        send_telegram_message(f"New Willhaben Product found for {name}:\n{full_url}")
                     new_links_found = True
 
             current_time = datetime.now()

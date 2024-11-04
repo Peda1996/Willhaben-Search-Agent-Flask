@@ -64,7 +64,7 @@ def crawl_and_notify():
 
         # Parse the page source with BeautifulSoup
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        article_links = soup.select('article.aditem div.aditem-main a[href]')
+        article_links = soup.select('ul.srchrslt-adtable article.aditem div.aditem-main a[href]')
 
         new_links_found = False
         send_notifications = last_checked is not None

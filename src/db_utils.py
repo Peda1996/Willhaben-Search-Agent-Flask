@@ -123,3 +123,13 @@ def get_crawled_urls(page, per_page):
         total = count_cursor.fetchone()[0]
     conn.close()
     return urls, total
+
+
+# Remove Telegram chat ID
+def remove_chat_id(chat_id):
+    with sqlite3.connect('data/urls.db') as conn:
+        cursor = conn.execute("DELETE FROM telegram_chats WHERE chat_id = ?", (chat_id,))
+        conn.commit()
+        # Check if any row was deleted
+        return cursor.rowcount > 0
+    conn.close()

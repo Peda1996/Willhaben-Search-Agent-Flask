@@ -10,13 +10,14 @@ COPY . /app
 # Create the data directory within the container
 RUN mkdir -p /app/src/data
 
-# Install dependencies for Chrome and ChromeDriver, including libvulkan1
+# Install dependencies for Chrome and ChromeDriver, including libvulkan1 and distutils
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     wget \
     unzip \
     curl \
     ca-certificates \
+    python3-distutils \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -31,22 +32,17 @@ RUN apt-get update && \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
-    libvulkan1 \
-    && rm -rf /var/lib/apt/lists/*
+    libvulkan1 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
+# Install Chrome and ensure the correct version
 RUN wget -q -O google-chrome-stable_current_amd64.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb && \
     rm google-chrome-stable_current_amd64.deb
 
-# Install ChromeDriver
-RUN CHROME_DRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
-    wget -q "https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip" && \
-    unzip chromedriver_linux64.zip -d /usr/local/bin/ && \
-    rm chromedriver_linux64.zip
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/requirements.txt
 
 # Expose the port on which the Flask app will run
 EXPOSE 5000

@@ -2,6 +2,8 @@ import platform
 import time
 import logging
 from datetime import datetime
+
+import urllib3
 from apscheduler.schedulers.background import BackgroundScheduler
 from bs4 import BeautifulSoup
 from config import config
@@ -12,7 +14,7 @@ from db_utils import (
     update_url_to_crawl
 )
 from bot import send_telegram_message
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import TimeoutException, WebDriverException, SessionNotCreatedException
 
 # Prefix for kleinanzeigen.de URLs
 prefix = "https://www.kleinanzeigen.de"
@@ -47,7 +49,8 @@ def initialize_driver():
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
             options.add_argument(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/87.0.4280.88 Safari/537.36")
 
             driver = uc.Chrome(options=options)
 
@@ -106,27 +109,37 @@ def crawl_and_notify():
             else:
                 update_url_to_crawl(url_id, last_checked=current_time)
 
-            break
+            break  # Exit the retry loop on success
 
-        except TimeoutException as e:
+        except (TimeoutException, urllib3.exceptions.MaxRetryError, urllib3.exceptions.NewConnectionError,
+                SessionNotCreatedException) as e:
             retries += 1
             logging.warning(
-                f"TimeoutException encountered while processing URL {url}, retry {retries}/{MAX_RETRIES}. Waiting for 5 minutes.")
-            time.sleep(ERROR_WAIT_TIME)  # Wait for 5 minutes before retrying
+                f"Encountered exception while processing URL {url}, retry {retries}/{MAX_RETRIES}. Waiting for {ERROR_WAIT_TIME} seconds. Error: {e}")
+            time.sleep(ERROR_WAIT_TIME)  # Wait before retrying
             if retries == MAX_RETRIES:
                 logging.error(f"Failed to load {url} after {MAX_RETRIES} retries. Restarting Selenium driver.")
-                try:
-                    driver.quit()
-                except Exception as ex:
-                    logging.error(f"Error while quitting driver: {ex}")
-                initialize_driver()
+            try:
+                driver.quit()
+            except Exception as ex:
+                logging.error(f"Error while quitting driver: {ex}")
+            initialize_driver()
         except WebDriverException as e:
             logging.error(f"WebDriverException encountered: {e}. Restarting Selenium driver.")
-            driver.quit()
+            try:
+                driver.quit()
+            except Exception as ex:
+                logging.error(f"Error while quitting driver: {ex}")
             initialize_driver()
             break
         except Exception as e:
             logging.error(f"Unexpected error while processing URL {url}: {e}")
+            # Restart the driver on any unexpected exception
+            try:
+                driver.quit()
+            except Exception as ex:
+                logging.error(f"Error while quitting driver: {ex}")
+            initialize_driver()
             break
 
     current_index = (current_index + 1) % len(urls_to_crawl)

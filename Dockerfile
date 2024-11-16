@@ -56,3 +56,7 @@ VOLUME ["/app/src/data"]
 
 # Run the command to start the Flask app
 CMD ["python", "/app/src/app.py"]
+
+# Healthcheck to ping Flask
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5000/ || exit 1

@@ -87,9 +87,12 @@ def crawl_and_notify():
 
 # Schedule the crawler
 scheduler = BackgroundScheduler()
-scheduler.start()
 
 
 def schedule_crawler():
+    if not scheduler.running:
+        logging.error("Scheduler is not running. Cannot schedule jobs.")
+        scheduler.start()
+
     scheduler.remove_all_jobs()
     scheduler.add_job(crawl_and_notify, 'interval', seconds=config['check_frequency'], id='crawl_and_notify')

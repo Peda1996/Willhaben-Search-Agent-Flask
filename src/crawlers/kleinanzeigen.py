@@ -2,7 +2,7 @@ import platform
 import time
 import logging
 from datetime import datetime
-
+import traceback
 import urllib3
 from apscheduler.schedulers.background import BackgroundScheduler
 from bs4 import BeautifulSoup
@@ -24,8 +24,13 @@ current_index = 0
 MAX_RETRIES = 3
 ERROR_WAIT_TIME = 300  # 5 minutes in seconds
 
+# Initialize logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize Selenium driver
+driver = None
+
+
 def initialize_driver():
     global driver
     try:
@@ -55,9 +60,21 @@ def initialize_driver():
             driver = uc.Chrome(options=options)
 
         driver.set_page_load_timeout(30)
+        logging.info("Driver initialized successfully.")
     except WebDriverException as e:
         logging.error(f"Failed to initialize WebDriver: {e}")
         raise
+
+
+def restart_driver():
+    global driver
+    try:
+        if driver:
+            driver.quit()
+    except Exception as ex:
+        logging.error(f"Error during driver quit: {ex}")
+    finally:
+        initialize_driver()
 
 
 # Initialize driver at the start
@@ -119,27 +136,14 @@ def crawl_and_notify():
             time.sleep(ERROR_WAIT_TIME)  # Wait before retrying
             if retries == MAX_RETRIES:
                 logging.error(f"Failed to load {url} after {MAX_RETRIES} retries. Restarting Selenium driver.")
-            try:
-                driver.quit()
-            except Exception as ex:
-                logging.error(f"Error while quitting driver: {ex}")
-            initialize_driver()
+                restart_driver()
         except WebDriverException as e:
             logging.error(f"WebDriverException encountered: {e}. Restarting Selenium driver.")
-            try:
-                driver.quit()
-            except Exception as ex:
-                logging.error(f"Error while quitting driver: {ex}")
-            initialize_driver()
+            restart_driver()
             break
         except Exception as e:
-            logging.error(f"Unexpected error while processing URL {url}: {e}")
-            # Restart the driver on any unexpected exception
-            try:
-                driver.quit()
-            except Exception as ex:
-                logging.error(f"Error while quitting driver: {ex}")
-            initialize_driver()
+            logging.error(f"Unexpected error while processing URL {url}: {e}\n{traceback.format_exc()}")
+            restart_driver()
             break
 
     current_index = (current_index + 1) % len(urls_to_crawl)
@@ -151,6 +155,10 @@ scheduler.start()
 
 
 def schedule_crawler():
+    if not scheduler.running:
+        logging.error("Scheduler is not running. Cannot schedule jobs.")
+        scheduler.start()
+
     scheduler.remove_all_jobs()
     scheduler.add_job(crawl_and_notify,
                       'interval',
@@ -163,6 +171,15 @@ def schedule_crawler():
 
 schedule_crawler()
 
+
+def scheduler_health_check():
+    if not scheduler.get_job('crawl_and_notify'):
+        logging.warning("Crawl job is missing. Rescheduling...")
+        schedule_crawler()
+
+
+scheduler.add_job(scheduler_health_check, 'interval', minutes=5, id='scheduler_health_check')
+
 import atexit
 
-atexit.register(lambda: driver.quit())
+atexit.register(lambda: driver.quit() if driver is not None else None)

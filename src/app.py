@@ -8,7 +8,8 @@ from db_utils import (
     add_url_to_crawl,
     delete_url_to_crawl,
     get_urls_to_crawl,
-    get_crawled_urls
+    get_crawled_urls,
+    update_url_to_crawl
 )
 from crawlers import schedule_crawler
 from bot import run_bot, stop_bot, send_telegram_message
@@ -56,7 +57,7 @@ def index():
                     return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d %H:%M:%S')
                 except ValueError:
                     return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-            return  date_str
+            return date_str
 
         # Parse each date with the helper function
         created_date = parse_date(created_date)
@@ -121,6 +122,33 @@ def add_url():
     return redirect(url_for('index'))
 
 
+@app.route('/edit_url/<int:url_id>', methods=['GET'])
+def edit_url(url_id):
+    # Fetch the URL details from the database
+    urls_to_crawl = get_urls_to_crawl()
+    url_data = None
+    for id, url, name, _, _, _ in urls_to_crawl:
+        if id == url_id:
+            url_data = {'id': id, 'url': url, 'name': name}
+            break
+    if not url_data:
+        flash("URL not found.")
+        return redirect(url_for('index'))
+    return render_template('edit_url.html', url_data=url_data, config=config)
+
+
+@app.route('/update_url/<int:url_id>', methods=['POST'])
+def update_url(url_id):
+    new_url = request.form['url']
+    new_name = request.form['name']
+    if update_url_to_crawl(url_id, url=new_url, name=new_name):
+        flash("URL updated successfully!")
+        send_telegram_message(f"Updated URL: {new_name} ({new_url})\n")
+    else:
+        flash("Failed to update URL.")
+    return redirect(url_for('index'))
+
+
 # Delete URL route
 @app.route('/delete_url/<int:url_id>', methods=['POST'])
 def delete_url(url_id):
@@ -140,4 +168,5 @@ if __name__ == '__main__':
     else:
         # For production, serve with Waitress
         from waitress import serve
+
         serve(app, host="0.0.0.0", port=5000)

@@ -77,18 +77,29 @@ def get_urls_to_crawl():
     return urls
 
 
-# Update last_checked and last_update timestamps
-def update_url_to_crawl(url_id, last_checked=None, last_update=None):
+# Update specific fields in the urls_to_crawl table
+def update_url_to_crawl(url_id, url=None, name=None, last_checked=None, last_update=None):
     with sqlite3.connect('data/urls.db') as conn:
-        if last_checked and last_update:
-            conn.execute("UPDATE urls_to_crawl SET last_checked = ?, last_update = ? WHERE id = ?",
-                         (last_checked, last_update, url_id))
-        elif last_checked:
-            conn.execute("UPDATE urls_to_crawl SET last_checked = ? WHERE id = ?", (last_checked, url_id))
-        elif last_update:
-            conn.execute("UPDATE urls_to_crawl SET last_update = ? WHERE id = ?", (last_update, url_id))
+        query = "UPDATE urls_to_crawl SET"
+        params = []
+        if url:
+            query += " url = ?,"
+            params.append(url)
+        if name:
+            query += " name = ?,"
+            params.append(name)
+        if last_checked:
+            query += " last_checked = ?,"
+            params.append(last_checked)
+        if last_update:
+            query += " last_update = ?,"
+            params.append(last_update)
+        # Remove trailing comma and add WHERE clause
+        query = query.rstrip(",") + " WHERE id = ?"
+        params.append(url_id)
+        conn.execute(query, tuple(params))
         conn.commit()
-    conn.close()
+        return True
 
 
 # Save new crawled URL

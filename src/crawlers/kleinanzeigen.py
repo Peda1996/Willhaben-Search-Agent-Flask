@@ -106,13 +106,13 @@ def crawl_and_notify():
             driver.implicitly_wait(10)
 
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            article_links = soup.select('ul#srchrslt-adtable article.aditem div.aditem-main a[href]')
+            article_links = soup.select('ul#srchrslt-adtable article.aditem[data-href]')
 
             new_links_found = False
             send_notifications = last_checked is not None
 
             for link in article_links:
-                found_url = link['href']
+                found_url = link['data-href']
                 full_url = prefix + found_url if not found_url.startswith("https://") else found_url
                 if not crawled_url_exists(full_url, url_id):
                     save_crawled_url(full_url, url_id)

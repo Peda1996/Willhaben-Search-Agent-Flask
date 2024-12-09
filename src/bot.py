@@ -51,8 +51,8 @@ async def addurl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_chat_id(chat.id, chat.type)
 
     if len(context.args) >= 2:
-        name = context.args[0]
-        url = ' '.join(context.args[1:])
+        name = ' '.join(context.args[:len(context.args) -1])
+        url = context.args[len(context.args)-1]
         if add_url_to_crawl(url, name):
             await update.message.reply_text(f"URL added to crawl list: {url} with name: {name}")
         else:

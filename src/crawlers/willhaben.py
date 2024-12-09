@@ -67,7 +67,7 @@ def crawl_and_notify():
                 if not crawled_url_exists(full_url, url_id):
                     save_crawled_url(full_url, url_id)
                     if send_notifications:
-                        send_telegram_message(f"New Willhaben Product found for {name}:\n{full_url}")
+                        send_telegram_message(f"🆕{name}:\n{full_url}")
                     new_links_found = True
 
             current_time = datetime.now()

@@ -8,6 +8,10 @@ check_status() {
   fi
 }
 
+
+echo "Prune old repos..."
+docker system prune -a
+
 echo "Updating repository with git pull..."
 git pull
 check_status "Git pull"

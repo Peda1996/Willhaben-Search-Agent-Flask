@@ -1,95 +1,92 @@
-
 # Willhaben Web Crawler Bot
 
-This project is a web crawler bot designed to periodically check specific URLs on [willhaben.at](https://www.willhaben.at/) and notify users about updates through a Telegram bot. The project is built with Python (using Flask and Telegram Bot API) and can be deployed via Docker.
+This project is a web crawler bot designed to periodically check specific URLs on [willhaben.at](https://www.willhaben.at/) and notify users about updates via a Telegram bot. The project is built with Python (using Flask and Telegram Bot API) and can be deployed using Docker and Docker Compose.
 
 ## Features
 - **Flask API**: Configure URLs and settings, view URL history.
-- **Periodic Crawling**: Scheduled to check for updates on specific URLs.
-- **Telegram Notifications**: Notifies users of updates via Telegram messages.
-- **Web Interface**: View and manage crawled URLs and their status.
-  
-## Setup Instructions
+- **Periodic Crawling**: Scheduled checks for updates on specific URLs.
+- **Telegram Notifications**: Sends notifications via Telegram messages.
+- **Web Interface**: View and manage crawled URLs and their statuses.
 
-### Requirements
-- **Python 3.12**
-- **Docker** (optional for containerized deployment)
+## Requirements
+- **Git**
+- **Docker & Docker Compose** (for containerized deployment)
+- **Python 3.12** (for local deployment)
 - Required Python packages (see `requirements.txt`)
 
-### Configuration
+> **Note:** Ensure the repository is cloned into your working directory before proceeding.
 
-The following configurations can be modified:
-- `check_frequency` (seconds): Sets the interval for URL checks.
-- `telegram_token`: Token for your Telegram bot.
+## Setup Instructions
 
-### Running the Bot with Docker
+### Clone the Repository
+Clone the repo into your desired directory:
+```bash
+git clone https://github.com/yourusername/willhaben-web-crawler.git
+cd willhaben-web-crawler
+```
 
-To deploy the project using Docker, follow these steps:
+### Running the Bot with Docker Compose
 
-1. **Build the Docker image**:
-    ```bash
-    docker build -t willhaben-web-crawler .
-    ```
+1. **Build and Start the Services**
 
-2. **Run the container**:
-    ```bash
-    docker run -p 5000:5000 willhaben-web-crawler
-    ```
+   Use Docker Compose to build and run the application:
+   ```bash
+   docker compose up --build -d
+   ```
+   This command will build the Docker images (if needed) and start the Flask app along with the Telegram bot service. The Flask API will be accessible at `http://localhost:5000`.
 
-This command will start the Flask app, accessible at `http://localhost:5000`.
+2. **Using the `update.sh` Script**
+
+   The `update.sh` script automates the process of updating the application by:
+   - Pulling the latest code from the Git repository.
+   - Pulling the latest Docker images.
+   - Rebuilding Docker containers without cache.
+   - Restarting services to apply the updates.
+
+   Ensure the script is executable:
+   ```bash
+   chmod +x update.sh
+   ```
+   Then, run the script:
+   ```bash
+   ./update.sh
+   ```
 
 ### Running the Bot Locally
 
-1. **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2. **Set up the database** (SQLite will be initialized automatically on first run).
-
-3. **Run the Flask application**:
-    ```bash
-    python app.py
-    ```
-
-4. **Start the Telegram Bot**:
-    Follow instructions in the `/help` command within Telegram to set up URLs and receive notifications.
-
-### Update Script for Willhaben Web Crawler Bot
-
-This guide provides instructions for using the `update.sh` script, which automates the process of updating the Willhaben Web Crawler Bot. The script pulls the latest code from the Git repository, rebuilds Docker containers, and restarts services to apply any changes seamlessly.
-
-#### Purpose of `update.sh`
-
-The `update.sh` script performs the following actions in sequence:
-1. Pulls the latest code from the Git repository.
-2. Updates Docker images if there are any new versions.
-3. Rebuilds Docker containers without using cache to apply any changes.
-4. Restarts the Docker containers to ensure the updated code is running.
-
-## Usage
-
-1. Ensure the script is executable:
+1. **Install Dependencies:**
    ```bash
-   chmod +x update.sh
-   
-### Available Telegram Commands
+   pip install -r requirements.txt
+   ```
+2. **Set Up the Database:**  
+   SQLite will be initialized automatically on the first run.
+3. **Run the Flask Application:**
+   ```bash
+   python app.py
+   ```
+4. **Start the Telegram Bot:**
+   Follow the instructions provided in the `/help` command within Telegram to set up URLs and receive notifications.
+
+## Available Telegram Commands
 - `/start <password>` - Initialize the bot for your chat.
 - `/help` - Display help message with commands and usage.
 - `/addurl <name> <url>` - Add a URL to be crawled with a specified name.
 - `/listurls` - List all URLs being crawled.
 - `/removeurl <id>` - Remove a URL from the crawl list by its ID.
 
-### Project Structure
+## Project Structure
 
 - `app.py`: Main Flask application.
 - `bot.py`: Handles Telegram bot interactions.
 - `crawler.py`: Manages periodic URL checks.
 - `db_utils.py`: Database setup and functions.
 - `Dockerfile`: Docker configuration file.
+- `docker-compose.yml`: Docker Compose configuration for managing services.
+- `update.sh`: Script to automate updates, rebuild Docker images, and restart services.
 
 ## License
 This project is open-source under the MIT license.
 
 ## Notes
-This project is specifically configured to check URLs from willhaben.at periodically. Modify or expand the functionality based on your requirements.
+- This project is specifically configured to check URLs from willhaben.at periodically. Modify or expand the functionality as needed.
+- Remember to clone the repository into your working directory before starting the setup process.

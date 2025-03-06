@@ -1,37 +1,31 @@
-# Use an official Selenium Docker image that provides compatible Chrome and ChromeDriver versions
-FROM selenium/standalone-chrome:latest
+# Use an official Python runtime as the base image
+FROM python:3.12-slim
 
-# Switch to root to install additional packages
-USER root
-
-# Install Python 3.12, the venv module, and curl (required for the healthcheck)
-RUN apt-get update && \
-    apt-get install -y python3.12 python3.12-venv python3-pip curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set the working directory in the container to /app/src
+# Set the working directory to /app/src
 WORKDIR /app/src
 
-# Copy the entire application code into the container at /app
+# Install required system packages and the venv module
+RUN apt-get update && \
+    apt-get install -y python3.12-venv curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy your application code into the container at /app
 COPY . /app
 
-# Create the data directory within the container (for persistent storage)
+# Create the data directory (for persistent storage)
 RUN mkdir -p /app/src/data
 
-# Create and activate a virtual environment, then upgrade pip and install Python dependencies
+# Create and activate a virtual environment, upgrade pip, and install dependencies
 RUN python3 -m venv /venv && \
     /venv/bin/pip install --no-cache-dir --upgrade pip && \
     /venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
-# Expose the port on which the Flask app will run
+# Expose the Flask app port
 EXPOSE 5000
 
 # Set environment variables for Flask
 ENV FLASK_APP=/app/src/app.py
 ENV FLASK_ENV=production
-
-# Define a volume for persistent data (optional)
-VOLUME ["/app/src/data"]
 
 # Healthcheck to ensure the Flask app is running
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

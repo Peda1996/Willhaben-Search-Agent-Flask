@@ -32,8 +32,10 @@ driver = None
 
 
 def initialize_driver():
+    import os
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
+
     global driver
     try:
         chrome_options = Options()
@@ -44,9 +46,12 @@ def initialize_driver():
         chrome_options.add_argument(
             "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
 
-        # Connect to the Selenium remote server (the Selenium container exposes the server on port 4444)
+        # Get Selenium URL from environment variables (defaults to localhost if not set)
+        selenium_url = os.environ.get("SELENIUM_URL", "http://localhost:4444/wd/hub")
+
+        # Connect to the Selenium remote server
         driver = webdriver.Remote(
-            command_executor='http://localhost:4444/wd/hub',
+            command_executor=selenium_url,
             options=chrome_options
         )
 
@@ -55,7 +60,6 @@ def initialize_driver():
     except Exception as e:
         logging.error(f"Failed to initialize Remote WebDriver: {e}")
         raise
-
 
 def restart_driver():
     global driver

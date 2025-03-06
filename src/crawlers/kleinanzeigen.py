@@ -32,37 +32,28 @@ driver = None
 
 
 def initialize_driver():
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
     global driver
     try:
-        if platform.system() == "Windows":
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_argument(
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
 
-            chrome_options = Options()
-            chrome_options.headless = True
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-            chrome_options.add_argument(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
-
-            driver = webdriver.Chrome(options=chrome_options)
-        else:
-            import undetected_chromedriver as uc
-            options = uc.ChromeOptions()
-            options.headless = True
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            options.add_argument(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/87.0.4280.88 Safari/537.36")
-
-            driver = uc.Chrome(options=options)
+        # Connect to the Selenium remote server (the Selenium container exposes the server on port 4444)
+        driver = webdriver.Remote(
+            command_executor='http://localhost:4444/wd/hub',
+            options=chrome_options
+        )
 
         driver.set_page_load_timeout(30)
-        logging.info("Driver initialized successfully.")
-    except WebDriverException as e:
-        logging.error(f"Failed to initialize WebDriver: {e}")
+        logging.info("Remote WebDriver initialized successfully.")
+    except Exception as e:
+        logging.error(f"Failed to initialize Remote WebDriver: {e}")
         raise
 
 

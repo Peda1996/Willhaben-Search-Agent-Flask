@@ -6,7 +6,6 @@ WORKDIR /app/src
 
 # Install required system packages and the venv module
 RUN apt-get update && \
-    apt-get install -y python3.12-venv curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy your application code into the container at /app

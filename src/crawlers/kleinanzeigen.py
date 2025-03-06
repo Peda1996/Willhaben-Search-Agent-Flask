@@ -38,6 +38,22 @@ def initialize_driver():
 
     global driver
     try:
+        if platform.system() == "Windows":
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+
+            chrome_options = Options()
+            chrome_options.headless = True
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+            chrome_options.add_argument(
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+
+            driver = webdriver.Chrome(options=chrome_options)
+            return
+
+        # for linux and non windows local development
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")

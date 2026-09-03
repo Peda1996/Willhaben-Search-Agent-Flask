@@ -1,0 +1,76 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+    <h1 class="text-2xl sm:text-3xl font-bold">🔥 Deal Feed</h1>
+    <div class="text-sm text-gray-600">
+        {{ stats.total or 0 }} listings ·
+        {{ stats.drops or 0 }} price drops ·
+        {{ stats.saved or 0 }} saved ·
+        {{ stats.bought or 0 }} bought
+    </div>
+</div>
+
+<form method="get" action="{{ url_for('deals') }}"
+      class="bg-white shadow-md rounded p-4 mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-sm">
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="Title / search name"
+           class="col-span-2 border rounded py-2 px-3">
+    <select name="seller" class="border rounded py-2 px-3">
+        <option value="">Any seller</option>
+        <option value="private" {{ 'selected' if filters.seller == 'private' }}>Private</option>
+        <option value="dealer" {{ 'selected' if filters.seller == 'dealer' }}>Dealer</option>
+    </select>
+    <select name="source_url_id" class="border rounded py-2 px-3">
+        <option value="">All searches</option>
+        {% for s in searches %}
+            <option value="{{ s[0] }}" {{ 'selected' if filters.source_url_id == s[0]|string }}>{{ s[2] }}</option>
+        {% endfor %}
+    </select>
+    <input type="number" name="min_price" value="{{ filters.min_price }}" placeholder="Min €"
+           class="border rounded py-2 px-3">
+    <input type="number" name="max_price" value="{{ filters.max_price }}" placeholder="Max €"
+           class="border rounded py-2 px-3">
+    <select name="state" class="border rounded py-2 px-3">
+        {% for value, label in [('active','Active (not muted)'), ('new','Unseen'), ('saved','Saved'),
+                                ('contacted','Contacted'), ('bought','Bought'), ('muted','Muted')] %}
+            <option value="{{ value }}" {{ 'selected' if filters.state == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <select name="sort" class="border rounded py-2 px-3">
+        {% for value, label in [('newest','Newest'), ('recent','Recently seen'), ('drop','Biggest drop'),
+                                ('price_asc','Price ↑'), ('price_desc','Price ↓')] %}
+            <option value="{{ value }}" {{ 'selected' if filters.sort == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <label class="flex items-center gap-2 px-1">
+        <input type="checkbox" name="drops_only" value="1" {{ 'checked' if filters.drops_only }}>
+        Price drops only
+    </label>
+    <div class="col-span-2 flex gap-2">
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Filter</button>
+        <a href="{{ url_for('deals') }}" class="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300">Reset</a>
+    </div>
+</form>
+
+{% include '_deals_feed.html' %}
+
+<div class="flex justify-between items-center mt-4">
+    <div>Page {{ page }} of {{ total_pages }}</div>
+    <div class="space-x-2">
+        {% if page > 1 %}
+            <a href="{{ url_for('deals', page=page-1, **filters) }}" class="px-3 py-1 bg-gray-300 rounded">Previous</a>
+        {% endif %}
+        {% if page < total_pages %}
+            <a href="{{ url_for('deals', page=page+1, **filters) }}" class="px-3 py-1 bg-gray-300 rounded">Next</a>
+        {% endif %}
+    </div>
+</div>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded shadow">
+            {% for message in messages %}<div>{{ message }}</div>{% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+{% endblock %}

@@ -1,3 +1,8 @@
-src/data
 .idea
 .venv
+__pycache__/
+*.pyc
+
+# Runtime data (SQLite DB + config.json)
+/data
+willhaben-agent/src/data

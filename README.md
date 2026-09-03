@@ -1,92 +1,103 @@
-# Willhaben Web Crawler Bot
+# Willhaben Search Agent
 
-This project is a web crawler bot designed to periodically check specific URLs on [willhaben.at](https://www.willhaben.at/) and notify users about updates via a Telegram bot. The project is built with Python (using Flask and Telegram Bot API) and can be deployed using Docker and Docker Compose.
+Home Assistant add-on (és önállóan is futtatható Docker alkalmazás), amely
+rendszeres időközönként lekérdezi a megadott [willhaben.at](https://www.willhaben.at/)
+keresési URL-eket, és **Telegramon** értesít az új hirdetésekről és az
+árcsökkenésekről. Beépített webes felülettel: deal feed szűréssel/rendezéssel,
+árelőzményekkel és gyors műveletgombokkal.
 
-## Features
-- **Flask API**: Configure URLs and settings, view URL history.
-- **Periodic Crawling**: Scheduled checks for updates on specific URLs.
-- **Telegram Notifications**: Sends notifications via Telegram messages.
-- **Web Interface**: View and manage crawled URLs and their statuses.
+Ez a repó egyben egy **Home Assistant add-on repository** – közvetlenül
+hozzáadható a Home Assistant add-on store-hoz, és onnan telepíthető/frissíthető.
 
-## Requirements
-- **Git**
-- **Docker & Docker Compose** (for containerized deployment)
-- **Python 3.12** (for local deployment)
-- Required Python packages (see `requirements.txt`)
+## Funkciók
 
-> **Note:** Ensure the repository is cloned into your working directory before proceeding.
+- **Periodikus crawl** – körönként egy mentett keresés, körkörösen.
+- **Strukturált kinyerés** – a willhaben `__NEXT_DATA__` JSON-jából ár, eladó
+  típusa (magán/kereskedő), hely + koordináták, feltöltés ideje, képek és
+  autó-attribútumok (évjárat, km, üzemanyag, váltó, teljesítmény).
+- **Árcsökkenés-figyelés** – minden crawl újraellenőrzi a már látott hirdetések
+  árát, és jelez, ha csökkent (`price_history` tábla őrzi a teljes trailt).
+- **Gazdag Telegram értesítések** – fotó + ár + főbb adatok + hely (Google Maps
+  linkkel) + hirdetés kora, inline gombokkal (⭐ Merken / ✉️ Kontaktiert /
+  ✅ Gekauft / 🔇 Stumm / ✍️ Nachricht / 🗺️ Karte).
+- **Deal feed** (`/deals`) – szűrhető, rendezhető lista minden hirdetésről.
 
-## Setup Instructions
+## Telepítés Home Assistantben (add-on)
 
-### Clone the Repository
-Clone the repo into your desired directory:
+1. **Settings → Add-ons → Add-on Store → ⋮ (jobb felül) → Repositories**
+2. Illeszd be:
+   `https://github.com/szepnorbee/Willhaben-Search-Agent-Flask`
+3. A store-ban megjelenik a **Willhaben Search Agent** – telepítsd, majd
+   **Start**. (Ajánlott: *Start on boot* és *Watchdog* bekapcsolása.)
+4. **OPEN WEB UI** (vagy `http://<HOME-ASSISTANT-IP>:5000`) → a *Configuration*
+   űrlapon add meg a Telegram botod tokenjét, egy `start_password`-öt, a
+   `check_frequency`-t és opcionálisan az `offer_factor`-t.
+5. A Telegram botodnak küldd el: `/start <start_password>`
+6. Add hozzá a figyelendő willhaben kereséseket (webes **Add URL**, vagy a
+   botban `/addurl <név> <url>`).
+
+Részletes leírás: [`willhaben-agent/DOCS.md`](willhaben-agent/DOCS.md).
+
+### Frissítés
+
+Ha a repóban új verzió jelenik meg (a
+[`willhaben-agent/config.yaml`](willhaben-agent/config.yaml) `version:` mezője
+emelkedik), a Home Assistant add-on oldalán megjelenik az **Update** gomb.
+
+## Önálló futtatás (Docker Compose, Home Assistant nélkül)
+
 ```bash
-git clone https://github.com/yourusername/willhaben-web-crawler.git
-cd willhaben-web-crawler
+git clone https://github.com/szepnorbee/Willhaben-Search-Agent-Flask.git
+cd Willhaben-Search-Agent-Flask
+docker compose up --build -d
 ```
 
-### Running the Bot with Docker Compose
+A felület: `http://localhost:5000`. Az adatok a `./data` mappába kerülnek.
+Frissítés: `./update.sh`.
 
-1. **Build and Start the Services**
+### Helyi futtatás Python-nal (fejlesztés)
 
-   Use Docker Compose to build and run the application:
-   ```bash
-   docker compose up --build -d
-   ```
-   This command will build the Docker images (if needed) and start the Flask app along with the Telegram bot service. The Flask API will be accessible at `http://localhost:5000`.
+```bash
+cd willhaben-agent
+pip install -r requirements.txt
+cd src
+python app.py
+```
 
-2. **Using the `update.sh` Script**
+Az adatok ilyenkor a `willhaben-agent/src/data` mappába kerülnek (a `DATA_DIR`
+környezeti változóval felülírható).
 
-   The `update.sh` script automates the process of updating the application by:
-   - Pulling the latest code from the Git repository.
-   - Pulling the latest Docker images.
-   - Rebuilding Docker containers without cache.
-   - Restarting services to apply the updates.
+## Telegram parancsok
 
-   Ensure the script is executable:
-   ```bash
-   chmod +x update.sh
-   ```
-   Then, run the script:
-   ```bash
-   ./update.sh
-   ```
+| Parancs | Leírás |
+|---|---|
+| `/start <jelszó>` | A bot aktiválása ehhez a chathez |
+| `/help` | Súgó |
+| `/addurl <név> <url>` | Új figyelt keresés |
+| `/listurls` | Figyelt keresések listája |
+| `/removeurl <id>` | Keresés törlése ID alapján |
+| `/stop` | Leiratkozás |
 
-### Running the Bot Locally
+## Projektstruktúra
 
-1. **Install Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. **Set Up the Database:**  
-   SQLite will be initialized automatically on the first run.
-3. **Run the Flask Application:**
-   ```bash
-   python app.py
-   ```
-4. **Start the Telegram Bot:**
-   Follow the instructions provided in the `/help` command within Telegram to set up URLs and receive notifications.
+```
+repository.yaml            Home Assistant add-on repository manifest
+docker-compose.yml         Önálló futtatás
+willhaben-agent/           Maga az add-on
+├── config.yaml            Add-on manifest (verzió, port, slug)
+├── build.yaml             Build alap image
+├── Dockerfile
+├── run.sh                 Entrypoint
+├── requirements.txt
+└── src/
+    ├── app.py             Flask alkalmazás
+    ├── bot.py             Telegram bot
+    ├── crawlers/willhaben.py
+    ├── listings.py        Kinyerés + formázás
+    ├── db_utils.py        SQLite
+    └── config.py
+```
 
-## Available Telegram Commands
-- `/start <password>` - Initialize the bot for your chat.
-- `/help` - Display help message with commands and usage.
-- `/addurl <name> <url>` - Add a URL to be crawled with a specified name.
-- `/listurls` - List all URLs being crawled.
-- `/removeurl <id>` - Remove a URL from the crawl list by its ID.
+## Licenc
 
-## Project Structure
-
-- `app.py`: Main Flask application.
-- `bot.py`: Handles Telegram bot interactions.
-- `crawler.py`: Manages periodic URL checks.
-- `db_utils.py`: Database setup and functions.
-- `Dockerfile`: Docker configuration file.
-- `docker-compose.yml`: Docker Compose configuration for managing services.
-- `update.sh`: Script to automate updates, rebuild Docker images, and restart services.
-
-## License
-This project is open-source under the MIT license.
-
-## Notes
-- This project is specifically configured to check URLs from willhaben.at periodically. Modify or expand the functionality as needed.
-- Remember to clone the repository into your working directory before starting the setup process.
+MIT.

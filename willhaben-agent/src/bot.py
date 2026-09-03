@@ -1,6 +1,14 @@
 import threading
-from telegram import Update, Bot
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+import json
+from telegram import Update, Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
 import asyncio
 import logging
 from db_utils import (
@@ -9,8 +17,11 @@ from db_utils import (
     get_urls_to_crawl,
     delete_url_to_crawl,
     get_chat_ids,
-    remove_chat_id  # Function to remove a chat ID from the database
+    remove_chat_id,  # Function to remove a chat ID from the database
+    get_listing,
+    set_listing_user_state,
 )
+from listings import build_caption, draft_inquiry, map_link
 from config import config
 
 # Set up logging
@@ -98,16 +109,140 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sorry, I didn't understand that command. Use /help to see available commands.")
 
 
-# Send Telegram message to all chats
+# --------------------------------------------------------------------------- #
+# Outgoing messages
+# --------------------------------------------------------------------------- #
+def _run_send(token, chat_id, coro_builder):
+    async def _do():
+        async with Bot(token=token) as bot:
+            await coro_builder(bot, chat_id)
+
+    try:
+        asyncio.run(_do())
+    except Exception as e:
+        logging.error(f"Error sending message to Telegram chat {chat_id}: {e}")
+
+
+def _send_to_all(coro_builder):
+    """coro_builder(bot, chat_id) -> awaitable, dispatched to every chat."""
+    token = config.get('telegram_token')
+    if not token:
+        logging.warning("No telegram_token configured; message not sent.")
+        return
+    for chat_id in get_chat_ids():
+        threading.Thread(
+            target=_run_send, args=(token, chat_id, coro_builder), daemon=True
+        ).start()
+
+
+# Send a plain Telegram text message to all chats
 def send_telegram_message(message):
-    chat_ids = get_chat_ids()
-    logging.info(f"Sending Telegram chat message: {message}, Chat_Ids: {chat_ids}")
-    for chat_id in chat_ids:
+    logging.info(f"Sending Telegram chat message: {message}")
+    _send_to_all(lambda bot, cid: bot.send_message(chat_id=cid, text=message))
+
+
+def _deal_keyboard(listing):
+    ad_id = listing.get('ad_id')
+    if not ad_id:
+        return None
+    rows = [
+        [
+            InlineKeyboardButton("⭐ Merken", callback_data=f"d:save:{ad_id}"),
+            InlineKeyboardButton("✉️ Kontaktiert", callback_data=f"d:contact:{ad_id}"),
+            InlineKeyboardButton("✅ Gekauft", callback_data=f"d:bought:{ad_id}"),
+        ],
+        [
+            InlineKeyboardButton("\U0001f507 Stumm", callback_data=f"d:mute:{ad_id}"),
+            InlineKeyboardButton("✍️ Nachricht", callback_data=f"d:draft:{ad_id}"),
+        ],
+    ]
+    link = map_link(
+        listing.get('coordinates', ''),
+        listing.get('postcode', ''),
+        listing.get('location', ''),
+    )
+    if link:
+        rows[1].append(InlineKeyboardButton("\U0001f5fa️ Karte", url=link))
+    return InlineKeyboardMarkup(rows)
+
+
+def send_listing_notification(listing, kind="new", old_price=None, search_name=None):
+    """Send a rich listing card (photo + caption + inline buttons)."""
+    caption = build_caption(listing, kind, old_price, search_name)
+    markup = _deal_keyboard(listing)
+    image = listing.get('image_url')
+
+    async def _send(bot, chat_id):
+        if image:
+            try:
+                await bot.send_photo(
+                    chat_id=chat_id, photo=image, caption=caption,
+                    parse_mode='HTML', reply_markup=markup,
+                )
+                return
+            except Exception as e:
+                logging.warning(f"send_photo failed ({e}); falling back to text.")
+        await bot.send_message(
+            chat_id=chat_id, text=caption, parse_mode='HTML',
+            reply_markup=markup, disable_web_page_preview=False,
+        )
+
+    logging.info(f"Sending listing notification ({kind}): {listing.get('url')}")
+    _send_to_all(lambda bot, cid: _send(bot, cid))
+
+
+_STATE_ACTIONS = {
+    'save': ('saved', "⭐ Gemerkt"),
+    'contact': ('contacted', "✉️ Als kontaktiert markiert"),
+    'bought': ('bought', "✅ Als gekauft markiert"),
+    'mute': ('muted', "\U0001f507 Stummgeschaltet"),
+}
+
+
+def _html_escape(text):
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+async def deal_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    try:
+        _, action, ad_id_raw = query.data.split(":")
+        ad_id = int(ad_id_raw)
+    except (ValueError, AttributeError):
+        await query.answer("Ungültige Aktion")
+        return
+
+    if action == 'draft':
+        listing = get_listing(ad_id)
+        if not listing:
+            await query.answer("Inserat nicht gefunden")
+            return
+        data = listing
+        if listing.get('attrs_json'):
+            try:
+                data = json.loads(listing['attrs_json'])
+            except (ValueError, TypeError):
+                pass
         try:
-            bot = Bot(token=config['telegram_token'])
-            threading.Thread(target=lambda: asyncio.run(bot.send_message(chat_id=chat_id, text=message))).start()
-        except Exception as e:
-            logging.error(f"Error sending message to Telegram chat {chat_id}: {e}")
+            factor = float(config.get('offer_factor', 0.87))
+        except (ValueError, TypeError):
+            factor = 0.87
+        text = draft_inquiry(data, offer_factor=factor)
+        await query.answer("Textvorschlag erstellt")
+        await query.message.reply_text(
+            "✍️ <b>Nachrichtenvorschlag</b> (zum Kopieren):\n\n"
+            f"<code>{_html_escape(text)}</code>",
+            parse_mode='HTML',
+        )
+        return
+
+    if action in _STATE_ACTIONS:
+        state, label = _STATE_ACTIONS[action]
+        set_listing_user_state(ad_id, state)
+        await query.answer(label)
+        return
+
+    await query.answer()
 
 
 # Run the Telegram bot as a background task
@@ -126,6 +261,7 @@ async def run_bot():
     bot_application.add_handler(CommandHandler('listurls', listurls))
     bot_application.add_handler(CommandHandler('removeurl', removeurl))
     bot_application.add_handler(CommandHandler('stop', stop_command))  # Register stop command
+    bot_application.add_handler(CallbackQueryHandler(deal_callback, pattern=r"^d:"))
     bot_application.add_handler(MessageHandler(filters.COMMAND, unknown))
 
     # Initialize and start the bot

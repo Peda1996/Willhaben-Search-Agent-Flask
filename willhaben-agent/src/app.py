@@ -9,16 +9,39 @@ from db_utils import (
     delete_url_to_crawl,
     get_urls_to_crawl,
     get_crawled_urls,
-    update_url_to_crawl
+    update_url_to_crawl,
+    get_deals,
+    get_deal_stats,
+    get_price_history,
+    set_listing_user_state,
 )
+from listings import human_age, spec_line, location_line, map_link, format_price, draft_inquiry
 from crawlers import schedule_crawler
 from bot import run_bot, stop_bot, send_telegram_message
 import asyncio
+import json
 import math
 from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+
+# Expose listing formatting helpers to templates
+app.jinja_env.globals.update(
+    human_age=human_age,
+    spec_line=spec_line,
+    location_line=location_line,
+    map_link=map_link,
+    format_price=format_price,
+)
+
+_DEAL_STATE_ACTIONS = {
+    'save': 'saved',
+    'contact': 'contacted',
+    'bought': 'bought',
+    'mute': 'muted',
+    'clear': None,
+}
 
 
 # Flask route for setting configuration and starting the bot
@@ -27,6 +50,11 @@ def set_config():
     config['check_frequency'] = int(request.form['check_frequency'])
     config['telegram_token'] = request.form['telegram_token']
     config['start_password'] = request.form['start_password']
+    if request.form.get('offer_factor'):
+        try:
+            config['offer_factor'] = float(request.form['offer_factor'])
+        except ValueError:
+            pass
     flash("Configuration updated!")
 
     # Save the updated config to the JSON file
@@ -109,6 +137,60 @@ def history_data():
     return jsonify({'data': data, 'total': total})
 
 
+# Deal feed
+@app.route('/deals')
+def deals():
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    filters = {
+        'q': request.args.get('q', '').strip(),
+        'seller': request.args.get('seller', ''),
+        'min_price': request.args.get('min_price', ''),
+        'max_price': request.args.get('max_price', ''),
+        'drops_only': request.args.get('drops_only', ''),
+        'state': request.args.get('state', 'active'),
+        'sort': request.args.get('sort', 'newest'),
+        'source_url_id': request.args.get('source_url_id', ''),
+    }
+    rows, total = get_deals(filters, page, per_page)
+    for row in rows:
+        try:
+            attrs = json.loads(row.get('attrs_json') or '{}')
+        except (ValueError, TypeError):
+            attrs = {}
+        for key, value in attrs.items():
+            row.setdefault(key, value)
+        row['specs'] = spec_line(row)
+        row['age'] = human_age(row.get('published'))
+        row['loc'] = location_line(row)
+        row['map'] = map_link(row.get('coordinates', ''), row.get('postcode', ''), row.get('location', ''))
+        row['price_history'] = get_price_history(row['ad_id'])
+        row['inquiry'] = draft_inquiry(row, float(config.get('offer_factor', 0.87)))
+    total_pages = max(1, math.ceil(total / per_page))
+    return render_template(
+        'deals.html',
+        deals=rows,
+        total=total,
+        page=page,
+        total_pages=total_pages,
+        filters=filters,
+        stats=get_deal_stats(),
+        searches=get_urls_to_crawl(),
+    )
+
+
+@app.route('/deals/action', methods=['POST'])
+def deal_action():
+    ad_id = int(request.form['ad_id'])
+    action = request.form.get('action')
+    if action not in _DEAL_STATE_ACTIONS:
+        flash("Unknown action.")
+    else:
+        set_listing_user_state(ad_id, _DEAL_STATE_ACTIONS[action])
+        flash("Deal updated.")
+    return redirect(request.referrer or url_for('deals'))
+
+
 # Add URL route
 @app.route('/add_url', methods=['POST'])
 def add_url():
@@ -169,4 +251,4 @@ if __name__ == '__main__':
         # For production, serve with Waitress
         from waitress import serve
 
-        serve(app, host="0.0.0.0", port=5000)
+        serve(app, host="0.0.0.0", port=int(os.getenv("PORT", "5000")))

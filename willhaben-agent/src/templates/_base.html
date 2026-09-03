@@ -9,6 +9,13 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
 <body class="bg-gray-100 text-gray-800">
+    <nav class="bg-white shadow mb-4">
+        <div class="container mx-auto px-4 sm:px-6 py-3 flex gap-4 text-sm sm:text-base font-semibold">
+            <a href="{{ url_for('deals') }}" class="text-blue-600 hover:text-blue-800">🔥 Deal Feed</a>
+            <a href="{{ url_for('index') }}" class="text-blue-600 hover:text-blue-800">⚙️ Searches</a>
+            <a href="{{ url_for('history') }}" class="text-blue-600 hover:text-blue-800">🕓 History</a>
+        </div>
+    </nav>
     <div class="container mx-auto p-4 sm:p-6">
         {% block content %}{% endblock %}
     </div>

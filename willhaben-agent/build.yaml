@@ -1,0 +1,5 @@
+build_from:
+  amd64: python:3.12-slim
+labels:
+  org.opencontainers.image.title: Willhaben Search Agent
+  org.opencontainers.image.source: https://github.com/szepnorbee/Willhaben-Search-Agent-Flask

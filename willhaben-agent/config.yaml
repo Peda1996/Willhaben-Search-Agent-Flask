@@ -1,0 +1,16 @@
+name: Willhaben Search Agent
+version: "1.0.0"
+slug: willhaben_agent
+description: Figyeli a willhaben.at mentett kereséseket, és Telegramon értesít új hirdetésekről és árcsökkenésekről.
+url: https://github.com/szepnorbee/Willhaben-Search-Agent-Flask
+arch:
+  - amd64
+init: false
+startup: application
+boot: auto
+host_network: false
+ports:
+  5000/tcp: 5000
+ports_description:
+  5000/tcp: Webes felület és konfiguráció
+webui: "http://[HOST]:[PORT:5000]"

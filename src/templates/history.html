@@ -1,18 +1,25 @@
 {% extends "_base.html" %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">Crawled URLs History</h1>
+<div class="flex flex-wrap justify-between gap-3 items-center mb-6">
+    <div><p class="text-sm font-semibold text-blue-700 uppercase">Suchraum</p><h1 class="text-3xl font-bold">Trefferhistorie: {{ space.name }}</h1></div>
+    <select id="space-picker" class="border rounded px-3 py-2 bg-white">
+        {% for item in spaces %}<option value="{{ item.id }}" {% if item.id == space.id %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+    </select>
+</div>
 <div id="history-table">
     {% include '_history_table.html' %}
 </div>
 <div class="mt-6">
-    <a href="{{ url_for('index') }}" class="text-blue-500 break-all hover:text-blue-700 font-semibold">Back to Configuration</a>
+    <a href="{{ url_for('index', space=space.id) }}" class="text-blue-500 break-all hover:text-blue-700 font-semibold">Zurück zu den Suchen</a>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     const page = {{ page }};
+    const spaceId = {{ space.id }};
 </script>
 <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+<script>document.getElementById('space-picker').addEventListener('change', function () { window.location.href = '{{ url_for("history") }}?space=' + this.value; });</script>
 {% endblock %}

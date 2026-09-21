@@ -26,7 +26,7 @@ def crawl_and_notify():
     urls_to_crawl = get_urls_to_crawl()
 
     # Filter URLs to include only those that start with willhaben_prefix
-    urls_to_crawl = [url_data for url_data in urls_to_crawl if url_data[1].startswith(willhaben_prefix)]
+    urls_to_crawl = [url_data for url_data in urls_to_crawl if url_data[2].startswith(willhaben_prefix)]
 
     # Check if there are URLs to crawl
     if not urls_to_crawl:
@@ -42,7 +42,7 @@ def crawl_and_notify():
         current_index = 0
         return
 
-    url_id, url, name, created_date, last_checked, last_update = url_data
+    url_id, space_id, url, name, created_date, last_checked, last_update = url_data
 
     try:
         response = requests.get(url, timeout=10)  # Set a timeout to avoid hanging
@@ -67,7 +67,7 @@ def crawl_and_notify():
                 if not crawled_url_exists(full_url, url_id):
                     save_crawled_url(full_url, url_id)
                     if send_notifications:
-                        send_telegram_message(f"🆕 {name}:\n{full_url}")
+                        send_telegram_message(f"🆕 {name}:\n{full_url}", space_id)
                     new_links_found = True
 
             current_time = datetime.now()
@@ -91,7 +91,7 @@ scheduler = BackgroundScheduler()
 
 def schedule_crawler():
     if not scheduler.running:
-        logging.error("Scheduler is not running. Cannot schedule jobs.")
+        logging.info("Starting willhaben scheduler.")
         scheduler.start()
 
     scheduler.remove_all_jobs()

@@ -1,0 +1,75 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div class="flex flex-wrap justify-between gap-3 items-center mb-6">
+    <div><p class="text-sm font-semibold text-blue-700 uppercase">Suchraum verwalten</p><h1 class="text-3xl font-bold">{{ space.name }}</h1></div>
+    <a href="{{ url_for('index', space=space.id) }}" class="text-blue-700 font-semibold hover:underline">← Zu den Suchen</a>
+</div>
+
+{% if invite %}
+<div class="bg-green-100 border-l-4 border-green-500 text-green-900 p-4 mb-6 rounded-r">
+    <h2 class="font-bold">Einladung erstellt</h2>
+    <p class="mt-1">Dieser Code gilt sieben Tage. Sende ihn an den gewünschten Telegram-Chat:</p>
+    <code class="inline-block mt-2 bg-white border rounded px-3 py-2 text-base select-all">/join {{ invite }}</code>
+</div>
+{% endif %}
+
+<div class="grid lg:grid-cols-2 gap-6">
+    <section class="bg-white shadow rounded p-5">
+        <h2 class="text-xl font-bold">Raumdetails</h2>
+        <p class="mt-1 text-sm text-gray-600">Der Name wird im Browser und in Telegram verwendet. {% if space.is_default %}„Allgemein“ ist der dauerhafte Standardraum und kann nicht gelöscht werden.{% endif %}</p>
+        <form action="{{ url_for('update_space_route', space_id=space.id) }}" method="post" class="mt-4 space-y-4">
+            <label class="block"><span class="font-semibold">Name</span><input name="name" value="{{ space.name }}" required maxlength="80" class="mt-1 border rounded py-2 px-3 w-full"></label>
+            <label class="block"><span class="font-semibold">Beschreibung</span><textarea name="description" maxlength="200" rows="3" class="mt-1 border rounded py-2 px-3 w-full">{{ space.description }}</textarea></label>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Raum speichern</button>
+        </form>
+    </section>
+
+    <section class="bg-white shadow rounded p-5">
+        <h2 class="text-xl font-bold">Mitglieder einladen</h2>
+        <p class="mt-1 text-sm text-gray-600">Ein Einladungs-Code macht den Raum im Ziel-Chat aktiv. Editor dürfen Suchen ändern, Viewer nur lesen und Meldungen erhalten.</p>
+        <form action="{{ url_for('invite_space_member', space_id=space.id) }}" method="post" class="mt-4 flex flex-wrap gap-3 items-end">
+            <label class="block"><span class="font-semibold">Rolle</span><select name="role" class="mt-1 border rounded py-2 px-3"><option value="editor">Editor</option><option value="viewer">Viewer</option></select></label>
+            <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Code erstellen</button>
+        </form>
+    </section>
+</div>
+
+<section class="bg-white shadow rounded p-5 mt-6">
+    <h2 class="text-xl font-bold">Mitglieder</h2>
+    <p class="mt-1 text-sm text-gray-600">Browser-Administratoren können hier Rolle und Meldungsstatus eines Telegram-Chats ändern. Der Chatname wird bei <code>/start</code> übernommen.</p>
+    <div class="overflow-x-auto mt-4">
+        <table class="min-w-full">
+            <thead><tr class="text-left border-b"><th class="py-2 pr-4">Chat</th><th class="py-2 pr-4">Typ</th><th class="py-2 pr-4">Beigetreten</th><th class="py-2">Einstellungen</th></tr></thead>
+            <tbody>
+            {% for member in members %}
+                <tr class="border-b align-top">
+                    <td class="py-3 pr-4">{{ member.chat_name or ('Chat ' ~ member.chat_id) }}</td>
+                    <td class="py-3 pr-4">{{ member.chat_type }}</td>
+                    <td class="py-3 pr-4 whitespace-nowrap">{{ member.joined_at[:19] }}</td>
+                    <td class="py-3">
+                        <form action="{{ url_for('update_member', space_id=space.id, chat_id=member.chat_id) }}" method="post" class="flex flex-wrap gap-2 items-center">
+                            <select name="role" class="border rounded py-1 px-2">
+                                {% for role in ['owner', 'editor', 'viewer'] %}<option value="{{ role }}" {% if member.role == role %}selected{% endif %}>{{ role }}</option>{% endfor %}
+                            </select>
+                            <label class="text-sm"><input type="checkbox" name="notifications_enabled" {% if member.notifications_enabled %}checked{% endif %}> Meldungen</label>
+                            <button class="border border-blue-600 text-blue-700 hover:bg-blue-50 font-semibold py-1 px-2 rounded">Speichern</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% if not space.is_default %}
+<section class="mt-6 border border-red-200 bg-red-50 rounded p-5">
+    <h2 class="text-xl font-bold text-red-900">Leeren Raum löschen</h2>
+    <p class="mt-1 text-sm text-red-900">Aus Sicherheitsgründen lassen sich nur Räume ohne Suchen löschen. Entferne oder verschiebe Suchen zuerst; Treffer werden nie automatisch gelöscht.</p>
+    <form action="{{ url_for('delete_space_route', space_id=space.id) }}" method="post" class="mt-3" onsubmit="return confirm('Diesen leeren Suchraum wirklich löschen?');">
+        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Suchraum löschen</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

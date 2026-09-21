@@ -1,12 +1,12 @@
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" data-table-scroll>
     <table class="min-w-full bg-white shadow-md rounded mb-6">
         <thead class="hidden sm:table-header-group">
             <tr>
                 <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Name</th>
                 <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">URL</th>
-                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Created Date</th>
-                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Last Checked</th>
-                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Last Update</th>
+                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Erstellt</th>
+                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Zuletzt geprüft</th>
+                <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Letzter Treffer</th>
                 <th class="py-3 px-2 sm:px-6 min-w-40 bg-gray-200"></th>
             </tr>
         </thead>
@@ -25,11 +25,11 @@
                     <td class="py-3 px-2 sm:px-6 min-w-40">
                     <div class="space-x-1 space-y-1">
                         <a href="{{ url_for('edit_url', url_id=item.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
-                            Edit
+                            Bearbeiten
                         </a>
                         <form action="{{ url_for('delete_url', url_id=item.id) }}" method="post" onsubmit="return confirmDelete();" style="display: inline;">
                             <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
-                                Delete
+                            Löschen
                             </button>
                         </form>
                     </div>
@@ -49,75 +49,33 @@
                         </div>
                     </td>
                     <td class="py-3 px-2 sm:px-6 min-w-40">
-                        <div class="font-bold">Created Date:</div>
+                        <div class="font-bold">Erstellt:</div>
                         <div>{{ item.created_date }}</div>
                     </td>
                     <td class="py-3 px-2 sm:px-6 min-w-40">
-                        <div class="font-bold">Last Checked:</div>
+                        <div class="font-bold">Zuletzt geprüft:</div>
                         <div>{{ item.last_checked }}</div>
                     </td>
                     <td class="py-3 px-2 sm:px-6 min-w-40">
-                        <div class="font-bold">Last Update:</div>
+                        <div class="font-bold">Letzter Treffer:</div>
                         <div>{{ item.last_update }}</div>
                     </td>
                    <td class="py-3 px-2 sm:px-6 min-w-40">
                         <a href="{{ url_for('edit_url', url_id=item.id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
-                            Edit
+                            Bearbeiten
                         </a>
                         <form action="{{ url_for('delete_url', url_id=item.id) }}" method="post" onsubmit="return confirmDelete();" style="display: inline;">
                             <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
-                                Delete
+                            Löschen
                             </button>
                         </form>
                     </td>
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="6" class="py-3 px-2 sm:px-6 min-w-40 text-center">No URLs to crawl. Add one above.</td>
+                    <td colspan="6" class="py-3 px-2 sm:px-6 min-w-40 text-center">Noch keine Suchen. Füge oben eine URL hinzu.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-
-
-{% block scripts %}
-<script>
-function confirmDelete() {
-    return confirm("Are you sure you want to delete this URL?");
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Toggle configuration form visibility
-    const toggleButton = document.getElementById('toggle-config');
-    const configForm = document.getElementById('config-form');
-
-    toggleButton.addEventListener('click', function () {
-        configForm.classList.toggle('hidden');
-        toggleButton.textContent = configForm.classList.contains('hidden') ? 'Show Configuration' : 'Hide Configuration';
-    });
-
-    // Auto-update URLs table and maintain scroll position
-    setInterval(updateUrlsTable, 5000);
-
-    function updateUrlsTable() {
-        // Save the current scroll position
-        const scrollTop = document.querySelector('#urls-table').scrollTop;
-        const scrollLeft = document.querySelector('#urls-table').scrollLeft;
-
-        fetch('{{ url_for("index") }}')
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newTable = doc.querySelector('#urls-table').innerHTML;
-                document.querySelector('#urls-table').innerHTML = newTable;
-
-                // Restore the scroll position
-                document.querySelector('#urls-table').scrollTop = scrollTop;
-                document.querySelector('#urls-table').scrollLeft = scrollLeft;
-            });
-    }
-});
-</script>
-{% endblock %}

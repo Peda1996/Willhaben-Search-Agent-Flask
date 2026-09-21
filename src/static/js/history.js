@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(updateHistoryTable, 5000); // Update every 5 seconds
 
     function updateHistoryTable() {
-        fetch(`/history_data?page=${page}`)
+        fetch(`/history_data?space=${spaceId}&page=${page}`)
             .then(response => response.json())
             .then(data => {
                 const tbody = document.querySelector('#history-table tbody');

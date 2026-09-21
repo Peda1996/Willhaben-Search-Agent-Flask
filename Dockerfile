@@ -8,16 +8,16 @@ WORKDIR /app/src
 RUN apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy your application code into the container at /app
-COPY . /app
-
-# Create the data directory (for persistent storage)
-RUN mkdir -p /app/src/data
-
-# Create and activate a virtual environment, upgrade pip, and install dependencies
+# Install dependencies before copying application code so ordinary source edits
+# can reuse this expensive Docker layer.
+COPY requirements.txt /app/requirements.txt
 RUN python3 -m venv /venv && \
     /venv/bin/pip install --no-cache-dir --upgrade pip && \
     /venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+
+# Copy the application after dependencies. Runtime data is mounted as a volume.
+COPY . /app
+RUN mkdir -p /app/src/data
 
 # Expose the Flask app port
 EXPOSE 5000

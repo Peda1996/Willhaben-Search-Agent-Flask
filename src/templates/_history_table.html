@@ -1,9 +1,9 @@
 <table class="min-w-full bg-white shadow-md rounded mb-6">
     <thead>
         <tr>
-            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Found URL</th>
-            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Source URL</th>
-            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Crawled At</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Gefundene URL</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Aus Suche</th>
+            <th class="py-3 px-6 bg-gray-200 text-gray-600 font-bold uppercase text-sm text-left">Gefunden am</th>
         </tr>
     </thead>
     <tbody class="text-gray-700">
@@ -23,7 +23,7 @@
             </tr>
         {% else %}
             <tr>
-                <td colspan="3" class="py-3 px-6 text-center">No URLs have been crawled yet.</td>
+                <td colspan="3" class="py-3 px-6 text-center">In diesem Suchraum wurden noch keine Treffer gefunden.</td>
             </tr>
         {% endfor %}
     </tbody>
@@ -32,14 +32,14 @@
 <!-- Pagination Controls -->
 <div class="flex justify-between items-center">
     <div>
-        Page {{ page }} of {{ total_pages }}
+        Seite {{ page }} von {{ total_pages }}
     </div>
     <div>
         {% if page > 1 %}
-            <a href="{{ url_for('history', page=page-1) }}" class="px-3 py-1 bg-gray-300 rounded">Previous</a>
+            <a href="{{ url_for('history', space=space.id, page=page-1) }}" class="px-3 py-1 bg-gray-300 rounded">Zurück</a>
         {% endif %}
         {% if page < total_pages %}
-            <a href="{{ url_for('history', page=page+1) }}" class="px-3 py-1 bg-gray-300 rounded">Next</a>
+            <a href="{{ url_for('history', space=space.id, page=page+1) }}" class="px-3 py-1 bg-gray-300 rounded">Weiter</a>
         {% endif %}
     </div>
 </div>

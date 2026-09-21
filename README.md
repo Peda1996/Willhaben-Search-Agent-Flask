@@ -7,6 +7,7 @@ This project is a web crawler bot designed to periodically check specific URLs o
 - **Periodic Crawling**: Scheduled checks for updates on specific URLs.
 - **Telegram Notifications**: Sends notifications via Telegram messages.
 - **Web Interface**: View and manage crawled URLs and their statuses.
+- **Search Workspaces**: Keep independent searches, history, members, and notifications in separate shared workspaces.
 
 ## Requirements
 - **Git**
@@ -68,11 +69,27 @@ cd willhaben-web-crawler
    Follow the instructions provided in the `/help` command within Telegram to set up URLs and receive notifications.
 
 ## Available Telegram Commands
-- `/start <password>` - Initialize the bot for your chat.
-- `/help` - Display help message with commands and usage.
-- `/addurl <name> <url>` - Add a URL to be crawled with a specified name.
-- `/listurls` - List all URLs being crawled.
-- `/removeurl <id>` - Remove a URL from the crawl list by its ID.
+- `/start <password>` - Register the chat and join the default workspace.
+- `/help` - Show all commands and explain workspaces.
+- `/spaces` - List workspaces available to this chat.
+- `/use <number or name>` - Switch the active workspace.
+- `/create <name>` - Create a separate workspace and become its owner.
+- `/invite [viewer|editor]` - Create a seven-day invitation code (owner only).
+- `/join <code>` - Join an invited workspace.
+- `/members` - List workspace members, their roles and notification status.
+- `/notify on|off` - Enable or disable notifications for the active workspace.
+- `/addurl <name> <url>` - Add a URL to the active workspace.
+- `/listurls` - List URLs in the active workspace.
+- `/removeurl <id>` - Remove an URL from the active workspace.
+- `/stop` - Unregister the chat completely.
+
+## Search Workspaces and Migration
+
+The application automatically migrates existing installations on the next startup. It creates the permanent default workspace **Allgemein**, puts all existing monitored URLs and Telegram chats into it, and keeps their history. The prior one-list behaviour therefore continues unchanged.
+
+Every additional workspace has an independent URL list, result history and Telegram recipient list. A new result is only sent to members of the workspace that owns the matching search and only when their notifications are enabled. The same search URL may be used in different workspaces.
+
+Use the workspace picker at the top of the browser interface to change context. The **Suchraum verwalten** page lets an administrator rename a workspace, create invitation codes, and adjust member roles and notification settings. The default workspace cannot be deleted; non-default workspaces can only be deleted when empty, preventing accidental loss of searches or history.
 
 ## Project Structure
 

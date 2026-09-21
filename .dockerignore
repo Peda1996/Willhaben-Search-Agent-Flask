@@ -1,5 +1,8 @@
-src/data
+.git
+.gitignore
 .idea
 .venv
 __pycache__/
 *.py[cod]
+src/data
+tests

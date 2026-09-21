@@ -88,14 +88,20 @@ def restart_driver():
         initialize_driver()
 
 
-# Initialize driver at the start
-initialize_driver()
-
-
 def crawl_and_notify():
     global current_index, driver
+    # Do not block the Flask/health-check startup while Selenium is still
+    # creating or releasing a browser session. The scheduled crawl retries on
+    # the next interval if the remote browser is temporarily unavailable.
+    if driver is None:
+        try:
+            initialize_driver()
+        except Exception as e:
+            logging.error(f"Unable to initialize Selenium driver: {e}")
+            return
+
     urls_to_crawl = get_urls_to_crawl()
-    urls_to_crawl = [url_data for url_data in urls_to_crawl if url_data[1].startswith(prefix)]
+    urls_to_crawl = [url_data for url_data in urls_to_crawl if url_data[2].startswith(prefix)]
 
     if not urls_to_crawl:
         logging.warning("No kleinanzeigen.de URLs to crawl.")
@@ -108,7 +114,7 @@ def crawl_and_notify():
         current_index = 0
         return
 
-    url_id, url, name, created_date, last_checked, last_update = url_data
+    url_id, space_id, url, name, created_date, last_checked, last_update = url_data
     retries = 0
 
     while retries < MAX_RETRIES:
@@ -128,7 +134,7 @@ def crawl_and_notify():
                 if not crawled_url_exists(full_url, url_id):
                     save_crawled_url(full_url, url_id)
                     if send_notifications:
-                        send_telegram_message(f"🆕 {name}:\n{full_url}")
+                        send_telegram_message(f"🆕 {name}:\n{full_url}", space_id)
                     new_links_found = True
 
             current_time = datetime.now()

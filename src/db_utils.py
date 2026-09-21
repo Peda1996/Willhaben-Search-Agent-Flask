@@ -3,8 +3,10 @@
 import secrets
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
+
+from time_utils import parse_stored_datetime, utc_now
 
 
 DATABASE_PATH = Path(__file__).resolve().parent / "data" / "urls.db"
@@ -265,7 +267,7 @@ def create_invitation(space_id, role="editor", valid_days=7):
         for _ in range(5):
             code = secrets.token_urlsafe(6).upper()
             try:
-                expires_at = (datetime.now() + timedelta(days=valid_days)).isoformat(sep=" ", timespec="seconds")
+                expires_at = (utc_now() + timedelta(days=valid_days)).isoformat(sep=" ", timespec="seconds")
                 conn.execute("INSERT INTO space_invitations (code, space_id, role, expires_at) VALUES (?, ?, ?, ?)",
                              (code, space_id, role, expires_at))
                 return code
@@ -278,7 +280,8 @@ def join_space(chat_id, code):
     with _connect() as conn:
         invitation = conn.execute('''SELECT i.*, s.name FROM space_invitations i JOIN spaces s ON s.id = i.space_id
                                      WHERE i.code = ?''', (code.strip().upper(),)).fetchone()
-        if not invitation or datetime.fromisoformat(invitation["expires_at"]) < datetime.now():
+        expires_at = parse_stored_datetime(invitation["expires_at"]) if invitation else None
+        if not invitation or expires_at is None or expires_at < utc_now():
             return None, "Dieser Einladungs-Code ist ungültig oder abgelaufen."
         conn.execute("INSERT OR IGNORE INTO space_members (space_id, chat_id, role) VALUES (?, ?, ?)",
                      (invitation["space_id"], chat_id, invitation["role"]))
@@ -356,7 +359,7 @@ def update_url_to_crawl(url_id, space_id=None, url=None, name=None, last_checked
 def save_crawled_url(url, source_url_id):
     with _connect() as conn:
         conn.execute("INSERT INTO crawled_urls (url, source_url_id, crawled_at) VALUES (?, ?, ?)",
-                     (url, source_url_id, datetime.now()))
+                     (url, source_url_id, utc_now()))
 
 
 def crawled_url_exists(url, source_url_id):

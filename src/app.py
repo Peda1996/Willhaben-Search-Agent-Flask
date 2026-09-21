@@ -2,7 +2,6 @@ import asyncio
 import math
 import os
 import threading
-from datetime import datetime
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 
@@ -27,6 +26,7 @@ from db_utils import (
     update_space_member,
     update_url_to_crawl,
 )
+from time_utils import TIMEZONE_NAME, format_local_datetime
 
 
 app = Flask(__name__)
@@ -44,16 +44,7 @@ def _selected_space():
 
 
 def _format_datetime(value):
-    if not value:
-        return value
-    if isinstance(value, datetime):
-        return value.strftime("%Y-%m-%d %H:%M:%S")
-    for format_string in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
-        try:
-            return datetime.strptime(value, format_string).strftime("%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            pass
-    return value
+    return format_local_datetime(value)
 
 
 @app.route('/set_config', methods=['POST'])
@@ -80,7 +71,8 @@ def index():
             'last_checked': _format_datetime(row['last_checked']),
             'last_update': _format_datetime(row['last_update']),
         })
-    return render_template('index.html', config=config, space=space, spaces=get_spaces(), urls_to_crawl=formatted_urls)
+    return render_template('index.html', config=config, timezone_name=TIMEZONE_NAME,
+                           space=space, spaces=get_spaces(), urls_to_crawl=formatted_urls)
 
 
 @app.route('/history')
@@ -88,9 +80,13 @@ def history():
     space = _selected_space()
     page = max(1, request.args.get('page', 1, type=int))
     crawled_urls, total = get_crawled_urls(space['id'], page, 10)
+    formatted_history = [
+        {'url': row['url'], 'source_url': row['source_url'], 'crawled_at': _format_datetime(row['crawled_at'])}
+        for row in crawled_urls
+    ]
     total_pages = max(1, math.ceil(total / 10))
-    return render_template('history.html', space=space, spaces=get_spaces(), crawled_urls=crawled_urls,
-                           page=page, total_pages=total_pages)
+    return render_template('history.html', space=space, spaces=get_spaces(), crawled_urls=formatted_history,
+                           timezone_name=TIMEZONE_NAME, page=page, total_pages=total_pages)
 
 
 @app.route('/history_data')

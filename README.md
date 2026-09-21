@@ -91,6 +91,12 @@ Every additional workspace has an independent URL list, result history and Teleg
 
 Use the workspace picker at the top of the browser interface to change context. The **Suchraum verwalten** page lets an administrator rename a workspace, create invitation codes, and adjust member roles and notification settings. The default workspace cannot be deleted; non-default workspaces can only be deleted when empty, preventing accidental loss of searches or history.
 
+## Timezones
+
+All timestamps are stored and compared in UTC, then converted only for browser display. The supplied Docker configuration displays times in `Europe/Vienna` (including automatic summer/winter-time changes), which also matches Austria and Germany. For a different deployment timezone, change `APP_TIMEZONE` and `TZ` under the `app.environment` section in `docker-compose.yml`, then recreate the app container with `docker compose up -d --build`.
+
+Existing offset-less timestamps from older releases are interpreted as UTC. This matches SQLite's `CURRENT_TIMESTAMP` default and corrects the former Docker display offset without changing stored history.
+
 ## Project Structure
 
 - `app.py`: Main Flask application.

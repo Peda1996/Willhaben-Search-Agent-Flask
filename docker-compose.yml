@@ -28,6 +28,8 @@ services:
       FLASK_APP: app.py
       FLASK_ENV: production
       SELENIUM_URL: "http://selenium:4444/wd/hub"  # Point to the Selenium container
+      APP_TIMEZONE: "Europe/Vienna"  # Browser timestamps; change for another deployment timezone
+      TZ: "Europe/Vienna"  # Also align container and log timestamps with the browser
     restart: always  # Automatically restart on failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]

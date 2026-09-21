@@ -5,7 +5,7 @@ FROM python:3.12-slim
 WORKDIR /app/src
 
 # Install required system packages and the venv module
-RUN apt-get update && apt-get install -y curl && \
+RUN apt-get update && apt-get install -y curl tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 # Install dependencies before copying application code so ordinary source edits
@@ -25,6 +25,8 @@ EXPOSE 5000
 # Set environment variables for Flask
 ENV FLASK_APP=/app/src/app.py
 ENV FLASK_ENV=production
+ENV APP_TIMEZONE=Europe/Vienna
+ENV TZ=Europe/Vienna
 
 # Healthcheck to ensure the Flask app is running
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

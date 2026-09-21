@@ -2,7 +2,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from bs4 import BeautifulSoup
 import requests
 import json
-from datetime import datetime
 
 from config import config
 from db_utils import (
@@ -12,6 +11,7 @@ from db_utils import (
     update_url_to_crawl
 )
 from bot import send_telegram_message
+from time_utils import utc_now
 import logging
 
 willhaben_prefix = "https://www.willhaben.at"
@@ -70,7 +70,7 @@ def crawl_and_notify():
                         send_telegram_message(f"🆕 {name}:\n{full_url}", space_id)
                     new_links_found = True
 
-            current_time = datetime.now()
+            current_time = utc_now()
             if new_links_found:
                 update_url_to_crawl(url_id, last_checked=current_time, last_update=current_time)
             else:
